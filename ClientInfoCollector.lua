@@ -1,3 +1,4 @@
+```
 --[[ ClientInfoCollector.lua · DEEP SCAN v7.2 (STANDALONE FIXED)
 Target: Roblox GAME CLIENT
 Modo: SOLO LECTURA. 100+ módulos de auditoría forense.
@@ -793,7 +794,7 @@ local function collectCommonMetatablesInfo()
     for name, obj in pairs(targets) do
         if obj then
             local ok, mt = pcall(function() return getmetatable(obj) end)
-            if ok and mt then
+            if ok and type(mt) == "table" then
                 info[name] = {}
                 for k, v in pairs(mt) do if type(k) == "string" then info[name][k] = type(v) end end
             end
@@ -1797,3 +1798,4 @@ if HttpService and type(HttpService.JSONEncode) == "function" then
 end
 
 return finalReport
+```
