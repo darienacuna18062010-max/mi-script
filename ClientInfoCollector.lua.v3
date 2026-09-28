@@ -1,7 +1,8 @@
---[[ ClientInfoCollector.lua · DEEP SCAN v7.0 (FORENSIC ULTRA-EXTRACTION)
+--[[ ClientInfoCollector.lua · DEEP SCAN v7.2 (STANDALONE FIXED)
 Target: Roblox GAME CLIENT
-Modo: SOLO LECTURA. 70+ módulos de auditoría forense.
-Objetivo: Extracción total de metadatos, entorno, hardware y detección de manipulación.
+Modo: SOLO LECTURA. 100+ módulos de auditoría forense.
+Fix: Solucionado error "HttpGet: attempt to call a nil value"
+Standalone: No requiere cargador externo.
 ]]
 
 --================================================================
@@ -93,7 +94,7 @@ local function safeClass(instance)
 end
 
 --================================================================
--- [1] MÓDULOS DE AUDITORÍA (1-70+)
+-- [1] MÓDULOS DE AUDITORÍA (1-100)
 --================================================================
 
 -- [1] Información del Ejecutor
@@ -137,10 +138,8 @@ local function collectExecutorInfo()
         "is_proto_closure","gethui","protectgui","getupvalue","setupvalue","getconstants",
         "getinfo","getregistry","compareinstances","cloneref","getspecialinfo","getcustomasset",
         "writefile","readfile","appendfile","delfile","makefolder","delfolder","listfiles",
-        "isfile","isfolder","getcustomasset","getinstances","getcallbackvalue","setfpscap",
-        "getfpscap","queue_on_teleport","setclipboard","getclipboard","loadstring",
-        "getscriptbytecode","getscriptfunction","getscripthash","getscriptenv",
-        "isvalidlevel","getlevel","setlevel","getstack","getstacklimit",
+        "isfile","isfolder","setfpscap","getfpscap","queue_on_teleport","setclipboard",
+        "getclipboard","loadstring","getscriptfunction","isvalidlevel","getlevel","setlevel",
     }
     for _, funcName in ipairs(executorFunctions) do
         local fn = ENV[funcName] or _G[funcName]
@@ -523,24 +522,23 @@ local function collectCameraInfo()
         info.CameraType = safeProp(cam, "CameraType")
         info.CameraSubject = safeProp(cam, "CameraSubject")
         info.FieldOfView = safeProp(cam, "FieldOfView")
-        info.ViewportSize = safeProp(cam, "ViewportSize")
-        info.CFrame = safeProp(cam, "CFrame")
-        info.Focus = safeProp(cam, "Focus")
-        info.NearPlaneZ, info.FarPlaneZ = safeProp(cam, "NearPlaneZ"), 100
+        info.ViewportSize = tostring(safeProp(cam, "ViewportSize"))
+        info.CFrame = tostring(safeProp(cam, "CFrame"))
+        info.Focus = tostring(safeProp(cam, "Focus"))
+        info.NearPlaneZ = safeProp(cam, "NearPlaneZ")
     end
     return info
 end
 
--- [24] Ratón (Mouse)
+-- [24] Ratón
 local function collectMouseInfo()
     local Players = safeGetService("Players")
     local info = { available = true }
     if Players and Players.LocalPlayer then
         local mouse = safeCall(Players.LocalPlayer, "GetMouse")
         if mouse then
-            info.Hit = safeProp(mouse, "Hit")
+            info.Hit = tostring(safeProp(mouse, "Hit"))
             info.Target = safeProp(mouse, "Target")
-            info.UnitRay = safeProp(mouse, "UnitRay")
             info.X, info.Y = safeProp(mouse, "X"), safeProp(mouse, "Y")
             info.ViewSizeX, info.ViewSizeY = safeProp(mouse, "ViewSizeX"), safeProp(mouse, "ViewSizeY")
         end
@@ -557,8 +555,8 @@ local function collectCharacterInfo()
         if char then
             info.Exists = true
             info.Name = safeProp(char, "Name")
-            info.Humanoid = char:FindFirstChildOfClass("Humanoid") ~= nil
             local humanoid = char:FindFirstChildOfClass("Humanoid")
+            info.Humanoid = humanoid ~= nil
             if humanoid then
                 info.Health = safeProp(humanoid, "Health")
                 info.MaxHealth = safeProp(humanoid, "MaxHealth")
@@ -568,7 +566,7 @@ local function collectCharacterInfo()
                 info.UseJumpPower = safeProp(humanoid, "UseJumpPower")
                 info.HipHeight = safeProp(humanoid, "HipHeight")
                 info.RigType = safeProp(humanoid, "RigType")
-                info.MoveDirection = safeProp(humanoid, "MoveDirection")
+                info.MoveDirection = tostring(safeProp(humanoid, "MoveDirection"))
                 info.DisplayDistanceType = safeProp(humanoid, "DisplayDistanceType")
                 info.HealthDisplayDistance = safeProp(humanoid, "HealthDisplayDistance")
                 info.NameDisplayDistance = safeProp(humanoid, "NameDisplayDistance")
@@ -588,7 +586,7 @@ local function collectCharacterInfo()
     return info
 end
 
--- [26] Reproducción de Audio
+-- [26] Audio
 local function collectSoundInfo()
     local SoundService = safeGetService("SoundService")
     local info = { available = true }
@@ -679,7 +677,7 @@ local function collectTagsInfo()
     return info
 end
 
--- [33] Badges y GamePasses
+-- [33] Badges
 local function collectBadgeInfo()
     local BadgeService, Players = safeGetService("BadgeService"), safeGetService("Players")
     local info = { available = true }
@@ -726,8 +724,7 @@ end
 -- [36] Jerarquía de Instancias
 local function collectInstanceHierarchyInfo()
     local info = { available = true }
-    local Game = game
-    info.GameChildren = safeCount(Game)
+    info.GameChildren = safeCount(game)
     info.WorkspaceDescendants = 0
     local Workspace = safeGetService("Workspace")
     if Workspace then
@@ -742,7 +739,7 @@ local function collectInstanceHierarchyInfo()
     return info
 end
 
--- [37] Verificación de Sandboxing
+-- [37] Sandboxing
 local function collectSandboxingInfo()
     local info = { available = true }
     info.RawEqualWorks = rawequal and rawequal({}, {}) == false
@@ -785,7 +782,7 @@ local function collectLibraryIntegrityInfo()
     return info
 end
 
--- [39] Verificación de Metatablas Comunes
+-- [39] Metatablas Comunes
 local function collectCommonMetatablesInfo()
     local info = { available = true }
     local targets = {
@@ -805,7 +802,7 @@ local function collectCommonMetatablesInfo()
     return info
 end
 
--- [40] Capacidades del Ejecutor (File System, HTTP, Clipboard)
+-- [40] Capacidades del Ejecutor
 local function collectExecutorCapabilities()
     local info = { available = true }
     local caps = {
@@ -821,7 +818,7 @@ local function collectExecutorCapabilities()
     return info
 end
 
--- [41] Detección de Anti-Cheat
+-- [41] Anti-Cheat
 local function collectAntiCheatInfo()
     local info = { available = true }
     local ReplicatedStorage = safeGetService("ReplicatedStorage")
@@ -854,7 +851,7 @@ local function collectRobloxVersionInfo()
     return info
 end
 
--- [43] Timers y Clock Precision
+-- [43] Timers y Clock
 local function collectClockInfo()
     local info = { available = true }
     if type(os) == "table" then
@@ -872,9 +869,7 @@ end
 local function collectPlatformInfo()
     local info = { available = true }
     local GuiService = safeGetService("GuiService")
-    if GuiService then
-        info.IsTenFootInterface = safeProp(GuiService, "IsTenFootInterface")
-    end
+    if GuiService then info.IsTenFootInterface = safeProp(GuiService, "IsTenFootInterface") end
     local UIS = safeGetService("UserInputService")
     if UIS then
         if UIS.TouchEnabled then info.Platform = "Mobile/Tablet" end
@@ -885,15 +880,9 @@ local function collectPlatformInfo()
     return info
 end
 
--- [45] Roblox User Agent
+-- [45] User Agent
 local function collectUserAgentInfo()
     local info = { available = true }
-    local HttpService = safeGetService("HttpService")
-    if HttpService then
-        if type(HttpService.GetUserAgent) == "function" then
-            info.UserAgent = "Available"
-        end
-    end
     local Players = safeGetService("Players")
     if Players then
         info.MaxPlayers = safeProp(Players, "MaxPlayers")
@@ -905,7 +894,7 @@ local function collectUserAgentInfo()
     return info
 end
 
--- [46] Chat y TextChat Channels
+-- [46] TextChat Channels
 local function collectTextChatChannelsInfo()
     local TCS = safeGetService("TextChatService")
     local info = { available = true }
@@ -928,23 +917,19 @@ end
 local function collectAssetInfo()
     local AssetService = safeGetService("AssetService")
     local info = { available = true }
-    if AssetService then
-        info.Exists = true
-    end
+    if AssetService then info.Exists = true end
     return info
 end
 
--- [48] Badge y GamePass Service
+-- [48] GamePass
 local function collectGamePassInfo()
     local MarketplaceService = safeGetService("MarketplaceService")
     local info = { available = true }
-    if MarketplaceService then
-        info.Exists = true
-    end
+    if MarketplaceService then info.Exists = true end
     return info
 end
 
--- [49] Detección de Exploits Conocidos
+-- [49] Detección de Exploits
 local function collectExploitDetection()
     local info = { available = true }
     local knownExploits = {
@@ -971,7 +956,7 @@ local function collectExploitDetection()
     return info
 end
 
--- [50] Análisis de Rendimiento del Sistema
+-- [50] System Perf
 local function collectSystemPerfInfo()
     local info = { available = true }
     local Stats = safeGetService("Stats")
@@ -984,7 +969,7 @@ local function collectSystemPerfInfo()
     return info
 end
 
--- [51] Análisis de Services Names
+-- [51] Service Names
 local function collectServiceNamesInfo()
     local info = { available = true }
     local names = {}
@@ -999,7 +984,7 @@ local function collectServiceNamesInfo()
     return info
 end
 
--- [52] Verificación de Hooks en Funciones Globales
+-- [52] Global Hooks
 local function collectGlobalHooksInfo()
     local info = { available = true }
     if type(debug) == "table" and type(debug.getinfo) == "function" then
@@ -1009,7 +994,7 @@ local function collectGlobalHooksInfo()
             if type(fn) == "function" then
                 local ok, inf = pcall(debug.getinfo, fn, "S")
                 if ok and type(inf) == "table" then
-                    hooks[name] = { what = inf.what, source = inf.source }
+                    hooks[name] = { what = inf.what, source = tostring(inf.source):sub(1, 80) }
                 end
             end
         end
@@ -1018,19 +1003,19 @@ local function collectGlobalHooksInfo()
     return info
 end
 
--- [53] Detección de Rate Limiters
+-- [53] Rate Limit
 local function collectRateLimitInfo()
     local info = { available = true }
     local Players = safeGetService("Players")
     if Players and Players.LocalPlayer then
         local lp = Players.LocalPlayer
-        local ok, throttle = pcall(function() return lp:GetNetworkPing() end)
-        if ok then info.NetworkPing = throttle end
+        local ok, ping = pcall(function() return lp:GetNetworkPing() end)
+        if ok then info.NetworkPing = ping end
     end
     return info
 end
 
--- [54] Análisis de la Ventana de Roblox
+-- [54] Window
 local function collectWindowInfo()
     local info = { available = true }
     local UIS = safeGetService("UserInputService")
@@ -1041,7 +1026,7 @@ local function collectWindowInfo()
     return info
 end
 
--- [55] StarterPlayer y Controles
+-- [55] StarterPlayer
 local function collectStarterPlayerInfo()
     local SP = safeGetService("StarterPlayer")
     local info = { available = true }
@@ -1053,15 +1038,14 @@ local function collectStarterPlayerInfo()
     return info
 end
 
--- [56] Análisis de Anuncios
+-- [56] AdService
 local function collectAdInfo()
     local info = { available = true }
-    local AdService = safeGetService("AdService")
-    if AdService then info.Exists = true end
+    if safeGetService("AdService") then info.Exists = true end
     return info
 end
 
--- [57] Análisis de HapticFeedback
+-- [57] HapticService
 local function collectHapticInfo()
     local HapticService = safeGetService("HapticService")
     local info = { available = true }
@@ -1073,7 +1057,7 @@ local function collectHapticInfo()
     return info
 end
 
--- [58] Análisis de Anuncios de Red
+-- [58] Network Stats
 local function collectNetworkStats()
     local info = { available = true }
     local Stats = safeGetService("Stats")
@@ -1084,7 +1068,7 @@ local function collectNetworkStats()
     return info
 end
 
--- [59] Análisis de Grupo
+-- [59] Group
 local function collectGroupInfo()
     local Players = safeGetService("Players")
     local info = { available = true }
@@ -1096,7 +1080,7 @@ local function collectGroupInfo()
     return info
 end
 
--- [60] Análisis de Coroutine y Threads
+-- [60] Threads
 local function collectThreadInfo()
     local info = { available = true }
     info.MainThread = tostring(coroutine.running())
@@ -1104,35 +1088,32 @@ local function collectThreadInfo()
     return info
 end
 
--- [61] Análisis de Memoria Lua
+-- [61] Lua Memory
 local function collectLuaMemoryInfo()
     local info = { available = true }
     if type(collectgarbage) == "function" then
         local ok, count = pcall(collectgarbage, "count")
-        if ok then info.LuaMemoryKB = count end
+        if ok then info.LuaMemoryKB = count; info.LuaMemoryMB = count / 1024 end
     end
     return info
 end
 
--- [62] Verificación de Identity Level
+-- [62] Identity
 local function collectIdentityInfo()
     local info = { available = true }
     if type(getthreadidentity) == "function" then
-        local ok, id = pcall(getthreadidentity)
-        if ok then info.ThreadIdentity = id end
+        local ok, id = pcall(getthreadidentity); if ok then info.ThreadIdentity = id end
     end
     if type(getidentity) == "function" then
-        local ok, id = pcall(getidentity)
-        if ok then info.Identity = id end
+        local ok, id = pcall(getidentity); if ok then info.Identity = id end
     end
     if type(getlevel) == "function" then
-        local ok, lvl = pcall(getlevel)
-        if ok then info.Level = lvl end
+        local ok, lvl = pcall(getlevel); if ok then info.Level = lvl end
     end
     return info
 end
 
--- [63] Análisis de Rendimiento de Script
+-- [63] Script Perf
 local function collectScriptPerfInfo()
     local info = { available = true }
     if type(getscripts) == "function" then
@@ -1151,7 +1132,7 @@ local function collectScriptPerfInfo()
     return info
 end
 
--- [64] Verificación de RemoteEvents
+-- [64] Remotes
 local function collectRemoteInfo()
     local RS = safeGetService("ReplicatedStorage")
     local info = { available = true }
@@ -1172,7 +1153,7 @@ local function collectRemoteInfo()
     return info
 end
 
--- [65] Análisis de StarterGui
+-- [65] StarterGui Deep
 local function collectStarterGuiDeepInfo()
     local SG = safeGetService("StarterGui")
     local info = { available = true }
@@ -1184,7 +1165,7 @@ local function collectStarterGuiDeepInfo()
     return info
 end
 
--- [66] Análisis de SoundService Profundo
+-- [66] Sound Deep
 local function collectSoundDeepInfo()
     local SS = safeGetService("SoundService")
     local info = { available = true }
@@ -1198,31 +1179,28 @@ local function collectSoundDeepInfo()
     return info
 end
 
--- [67] Análisis de Debris
+-- [67] Debris
 local function collectDebrisInfo()
-    local Debris = safeGetService("Debris")
     local info = { available = true }
-    if Debris then info.Exists = true end
+    if safeGetService("Debris") then info.Exists = true end
     return info
 end
 
--- [68] Análisis de TweenService
+-- [68] TweenService
 local function collectTweenInfo()
-    local TS = safeGetService("TweenService")
     local info = { available = true }
-    if TS then info.Exists = true end
+    if safeGetService("TweenService") then info.Exists = true end
     return info
 end
 
--- [69] Análisis de Pathfinding
+-- [69] Pathfinding
 local function collectPathfindingInfo()
-    local PS = safeGetService("PathfindingService")
     local info = { available = true }
-    if PS then info.Exists = true end
+    if safeGetService("PathfindingService") then info.Exists = true end
     return info
 end
 
--- [70] Análisis de ProximityPrompts
+-- [70] ProximityPrompts
 local function collectProximityInfo()
     local info = { available = true }
     local Workspace = safeGetService("Workspace")
@@ -1239,7 +1217,7 @@ local function collectProximityInfo()
     return info
 end
 
--- [71] Análisis de ClickDetectors
+-- [71] ClickDetectors
 local function collectClickDetectorInfo()
     local info = { available = true }
     local Workspace = safeGetService("Workspace")
@@ -1256,7 +1234,7 @@ local function collectClickDetectorInfo()
     return info
 end
 
--- [72] Análisis de Particles y Effects
+-- [72] Particles
 local function collectParticleInfo()
     local info = { available = true }
     local Workspace = safeGetService("Workspace")
@@ -1273,7 +1251,7 @@ local function collectParticleInfo()
     return info
 end
 
--- [73] Análisis de GuiObjects
+-- [73] GuiObjects
 local function collectGuiObjectInfo()
     local info = { available = true }
     local Players = safeGetService("Players")
@@ -1293,7 +1271,7 @@ local function collectGuiObjectInfo()
     return info
 end
 
--- [74] Análisis de Animation Tracks
+-- [74] Animations
 local function collectAnimationInfo()
     local Players = safeGetService("Players")
     local info = { available = true }
@@ -1315,7 +1293,7 @@ local function collectAnimationInfo()
     return info
 end
 
--- [75] Análisis de Rodamiento de Red
+-- [75] Network Ping
 local function collectNetworkPing()
     local Players = safeGetService("Players")
     local info = { available = true }
@@ -1326,7 +1304,7 @@ local function collectNetworkPing()
     return info
 end
 
--- [76] Análisis de Avatar Loaded
+-- [76] Avatar Loaded
 local function collectAvatarLoadedInfo()
     local Players = safeGetService("Players")
     local info = { available = true }
@@ -1337,7 +1315,7 @@ local function collectAvatarLoadedInfo()
     return info
 end
 
--- [77] Análisis de Área de Interés (Streaming)
+-- [77] Streaming
 local function collectStreamingInfo()
     local Workspace = safeGetService("Workspace")
     local info = { available = true }
@@ -1351,7 +1329,7 @@ local function collectStreamingInfo()
     return info
 end
 
--- [78] Análisis de Save/Instance Persistence
+-- [78] Save / Persistence
 local function collectSaveInfo()
     local info = { available = true }
     local ok, ps = pcall(function() return game:GetService("Players") end)
@@ -1362,7 +1340,7 @@ local function collectSaveInfo()
     return info
 end
 
--- [79] Análisis de GamePass y Developer Product
+-- [79] Developer Product
 local function collectDeveloperInfo()
     local MPS = safeGetService("MarketplaceService")
     local info = { available = true }
@@ -1373,7 +1351,7 @@ local function collectDeveloperInfo()
     return info
 end
 
--- [80] Análisis de Modo de Juego
+-- [80] Game Mode
 local function collectGameModeInfo()
     local info = { available = true }
     info.GameId = game.GameId
@@ -1386,19 +1364,19 @@ local function collectGameModeInfo()
     return info
 end
 
--- [81] Análisis de Atributos del Game
+-- [81] Game Attributes
 local function collectGameAttributes()
     local info = { available = true }
     local attrs = {}
     local ok, all = pcall(function() return game:GetAttributes() end)
     if ok and type(all) == "table" then
-        for k, v in pairs(all) do attrs[k] = v end
+        for k, v in pairs(all) do attrs[k] = tostring(v) end
     end
     info.GameAttributes = attrs
     return info
 end
 
--- [82] Análisis de Attributes del LocalPlayer
+-- [82] Player Attributes
 local function collectPlayerAttributes()
     local Players = safeGetService("Players")
     local info = { available = true }
@@ -1406,14 +1384,14 @@ local function collectPlayerAttributes()
         local attrs = {}
         local ok, all = pcall(function() return Players.LocalPlayer:GetAttributes() end)
         if ok and type(all) == "table" then
-            for k, v in pairs(all) do attrs[k] = v end
+            for k, v in pairs(all) do attrs[k] = tostring(v) end
         end
         info.PlayerAttributes = attrs
     end
     return info
 end
 
--- [83] Análisis de Tags del Workspace
+-- [83] Workspace Tags
 local function collectWorkspaceTags()
     local Workspace = safeGetService("Workspace")
     local info = { available = true }
@@ -1424,7 +1402,7 @@ local function collectWorkspaceTags()
     return info
 end
 
--- [84] Verificación de Debug Info de Funciones Clave
+-- [84] Debug Func Info
 local function collectDebugFuncInfo()
     local info = { available = true }
     if type(debug) == "table" and type(debug.getinfo) == "function" then
@@ -1443,7 +1421,7 @@ local function collectDebugFuncInfo()
     return info
 end
 
--- [85] Verificación de Posibles Keybindings
+-- [85] Keybindings
 local function collectKeybindings()
     local UIS = safeGetService("UserInputService")
     local info = { available = true }
@@ -1458,7 +1436,7 @@ local function collectKeybindings()
     return info
 end
 
--- [86] Verificación de Remote Functions Firing
+-- [86] Input States
 local function collectInputStates()
     local UIS = safeGetService("UserInputService")
     local info = { available = true }
@@ -1474,17 +1452,15 @@ local function collectInputStates()
     return info
 end
 
--- [87] Análisis de Área de Rendimiento de Physics
+-- [87] Physics Perf
 local function collectPhysicsPerf()
     local info = { available = true }
     local Stats = safeGetService("Stats")
-    if Stats then
-        info.ContactsCount = safeProp(Stats, "ContactsCount")
-    end
+    if Stats then info.ContactsCount = safeProp(Stats, "ContactsCount") end
     return info
 end
 
--- [88] Verificación de la Longitud del Heap
+-- [88] Heap
 local function collectHeapInfo()
     local info = { available = true }
     if type(collectgarbage) == "function" then
@@ -1494,7 +1470,7 @@ local function collectHeapInfo()
     return info
 end
 
--- [89] Verificación de Variables de Entorno Global
+-- [89] Global Vars
 local function collectGlobalVars()
     local info = { available = true }
     local whitelist = {
@@ -1510,7 +1486,7 @@ local function collectGlobalVars()
     return info
 end
 
--- [90] Detección de Modificaciones a Metatablas
+-- [90] Meta Modifications
 local function collectMetaModifications()
     local info = { available = true }
     if type(getrawmetatable) == "function" then
@@ -1531,23 +1507,22 @@ local function collectMetaModifications()
     return info
 end
 
--- [91] Verificación de Time Sources
+-- [91] Time Sources
 local function collectTimeSources()
     local info = { available = true }
-    local sources = { "time", "tick", "elapsedTime", "os.clock", "os.time", "DateTime.now" }
-    for _, src in ipairs(sources) do
-        local ok, fn = pcall(function()
-            if src == "os.clock" then return os.clock end
-            if src == "os.time" then return os.time end
-            if src == "DateTime.now" then return DateTime.now().UnixTimestampMillis end
-            return _G[src] and _G[src]() or nil
-        end)
-        if ok and fn then info[src] = tostring(fn):sub(1, 50) end
+    if type(time) == "function" then local ok, t = pcall(time); if ok then info.time = t end end
+    if type(tick) == "function" then local ok, t = pcall(tick); if ok then info.tick = t end end
+    if type(elapsedTime) == "function" then local ok, t = pcall(elapsedTime); if ok then info.elapsedTime = t end end
+    if type(os) == "table" and type(os.clock) == "function" then local ok, t = pcall(os.clock); if ok then info.os_clock = t end end
+    if type(os) == "table" and type(os.time) == "function" then local ok, t = pcall(os.time); if ok then info.os_time = t end end
+    if type(DateTime) == "table" and type(DateTime.now) == "function" then
+        local ok, d = pcall(function() return DateTime.now().UnixTimestampMillis end)
+        if ok then info.DateTimeNow = d end
     end
     return info
 end
 
--- [92] Análisis de Variables de Cierre
+-- [92] Upvalues
 local function collectUpvalueInfo()
     local info = { available = true }
     if type(debug) == "table" and type(debug.getupvalue) == "function" and type(getgc) == "function" then
@@ -1557,7 +1532,7 @@ local function collectUpvalueInfo()
             for i, fn in ipairs(gc) do
                 if i > 100 then break end
                 if type(fn) == "function" then
-                    local ok2 = pcall(function()
+                    pcall(function()
                         for j = 1, 5 do
                             local n = debug.getupvalue(fn, j)
                             if n then upvalueCount = upvalueCount + 1 end
@@ -1571,18 +1546,18 @@ local function collectUpvalueInfo()
     return info
 end
 
--- [93] Verificación de Entornos Sandbox
+-- [93] Sandbox Verification
 local function collectSandboxVerification()
     local info = { available = true }
     info.IsSandboxed = false
     local ok = pcall(function() return getfenv(0) end)
-    if ok then info.CanGetEnv0 = true else info.CanGetEnv0 = false end
+    info.CanGetEnv0 = ok
     local ok2 = pcall(function() return setfenv(0, {}) end)
     info.CanSetEnv0 = ok2
     return info
 end
 
--- [94] Detección de Módulos Cargados por el Ejecutor
+-- [94] Executor Modules
 local function collectExecutorModules()
     local info = { available = true }
     if type(getloadedmodules) == "function" then
@@ -1599,7 +1574,7 @@ local function collectExecutorModules()
     return info
 end
 
--- [95] Verificación de Guardias de Thread
+-- [95] Thread Guards
 local function collectThreadGuards()
     local info = { available = true }
     local ok, id = pcall(function() return getthreadidentity and getthreadidentity() or nil end)
@@ -1609,7 +1584,7 @@ local function collectThreadGuards()
     return info
 end
 
--- [96] Verificación de Variables Compartidas
+-- [96] Shared Info
 local function collectSharedInfo()
     local info = { available = true }
     if type(shared) == "table" then
@@ -1629,7 +1604,7 @@ local function collectSharedInfo()
     return info
 end
 
--- [97] Análisis de Rendimiento de Frames
+-- [97] Frame Stats
 local function collectFrameStats()
     local info = { available = true }
     local Stats = safeGetService("Stats")
@@ -1643,20 +1618,18 @@ local function collectFrameStats()
     return info
 end
 
--- [98] Detección de Fingerprints
+-- [98] Fingerprint
 local function collectFingerprintInfo()
     local info = { available = true }
     local HttpService = safeGetService("HttpService")
-    if HttpService then
-        if type(HttpService.GenerateGUID) == "function" then
-            local ok, guid = pcall(function() return HttpService:GenerateGUID(false) end)
-            if ok then info.RobloxGUID = guid end
-        end
+    if HttpService and type(HttpService.GenerateGUID) == "function" then
+        local ok, guid = pcall(function() return HttpService:GenerateGUID(false) end)
+        if ok then info.RobloxGUID = guid end
     end
     return info
 end
 
--- [99] Verificación de Tipo de Instancia Global
+-- [99] Instance Classes
 local function collectInstanceClassInfo()
     local info = { available = true }
     local classes = { "Instance", "Part", "Model", "Folder", "Script", "LocalScript", "ModuleScript",
@@ -1667,12 +1640,12 @@ local function collectInstanceClassInfo()
     return info
 end
 
--- [100] Reporte Final de Estado del Cliente
+-- [100] Client State
 local function collectClientState()
     local info = { available = true }
     info.UptimeSeconds = CLOCK()
     info.Timestamp = os.time and os.time() or 0
-    info.RobloxOSVersion = (type(version) == "function") and select(1, version()) or "Unknown"
+    info.RobloxVersion = (type(version) == "function") and select(1, version()) or "Unknown"
     return info
 end
 
@@ -1805,18 +1778,18 @@ end
 
 local finalReport = collectAllInfo()
 
-print("╔══════════════════════════════════════════════════════════════════╗")
-print("║     REPORTE DE AUDITORÍA FORENSE ULTRA-PROFUNDA v7.0            ║")
-print("║     Módulos de auditoría: 100+                                   ║")
-print("╚══════════════════════════════════════════════════════════════════╝")
+print("==================================================")
+print("  REPORTE DE AUDITORIA FORENSE ULTRA v7.2         ")
+print("  Modulos: 100+                                   ")
+print("==================================================")
 printReport(finalReport)
-print("╔══════════════════════════════════════════════════════════════════╗")
-print("║                    FIN DEL REPORTE FORENSE                       ║")
-print("╚══════════════════════════════════════════════════════════════════╝")
+print("==================================================")
+print("  FIN DEL REPORTE FORENSE                         ")
+print("==================================================")
 
--- Exportación JSON
+-- Exportación JSON Segura (Opcional)
 local HttpService = safeGetService("HttpService")
-if HttpService then
+if HttpService and type(HttpService.JSONEncode) == "function" then
     local ok, json = pcall(function() return HttpService:JSONEncode(finalReport) end)
     if ok then
         print("\n[JSON Export] Longitud: " .. #json .. " caracteres")
