@@ -66,7 +66,7 @@ end
 
 local function safeCall(obj, method, ...)
     if not obj then return nil end
-    local ok, result = pcall(function() return obj[method](obj, ...) end)
+    local ok, result = pcall(function(...) return obj[method](obj, ...) end, ...)
     return ok and result or nil
 end
 
